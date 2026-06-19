@@ -1,0 +1,15 @@
+fastapi
+uvicorn[standard]
+pydantic
+sqlalchemy
+psutil
+pynvml
+openai
+PyMuPDF
+ebooklib
+beautifulsoup4
+python-docx
+python-dotenv
+jinja2
+requests
+python-multipart

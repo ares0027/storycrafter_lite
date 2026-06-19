@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Storycrafter Lite - Book Extractor</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        .tooltip-icon {
+            display: inline-block;
+            margin-left: 4px;
+            color: var(--text-secondary);
+            background: var(--bg-hover);
+            border-radius: 50%;
+            width: 16px;
+            height: 16px;
+            text-align: center;
+            font-size: 11px;
+            line-height: 16px;
+            cursor: help;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">
+                <h2 data-i18n="app_title">Storycrafter Lite</h2>
+                <span class="badge">v0.2</span>
+            </div>
+
+            <div class="config-section">
+                <h3 data-i18n="config_title">Configuration</h3>
+                
+                <div class="input-group">
+                    <label><span data-i18n="llm_provider">LLM Provider</span> <span class="tooltip-icon" data-i18n-title="tip_llm_provider" title="Select the local or cloud AI engine.">(?)</span></label>
+                    <select id="llm-provider" onchange="updateModels()">
+                        <option value="lmstudio">LM Studio</option>
+                        <option value="ollama">Ollama</option>
+                        <option value="gemini">Google Gemini</option>
+                    </select>
+                </div>
+                
+                <div class="input-group">
+                    <label><span data-i18n="base_url">Base URL</span> <span class="tooltip-icon" data-i18n-title="tip_base_url" title="API endpoint for the selected provider.">(?)</span></label>
+                    <input type="text" id="llm-base-url">
+                </div>
+
+                <div class="input-group">
+                    <label><span data-i18n="model">Model</span> <span class="tooltip-icon" data-i18n-title="tip_model" title="The AI model to use for extractions and corrections.">(?)</span></label>
+                    <select id="llm-model"></select>
+                </div>
+
+                <button class="btn btn-primary" style="width: 100%; margin-top: 16px;" onclick="saveConfig()" data-i18n="save_config">Save Configuration</button>
+                
+                <hr style="margin: 24px 0; border-color: var(--border);">
+                
+                <h3 style="margin-bottom: 12px; font-size: 14px; color: var(--text-secondary);" data-i18n="llm_controls">LLM Controls</h3>
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                    <button class="btn" style="background: var(--bg-dark); color: var(--text-primary);" onclick="checkConnection()"><span data-i18n="check_conn">Check Connection</span> <span class="tooltip-icon" data-i18n-title="tip_check_conn" title="Test if the AI server is reachable.">(?)</span></button>
+                    <button class="btn" style="background: var(--bg-dark); color: var(--text-primary);" onclick="requestModels()"><span data-i18n="req_models">Request Models</span> <span class="tooltip-icon" data-i18n-title="tip_req_models" title="Refresh the list of available models.">(?)</span></button>
+                    <button class="btn" style="background: #ef4444; color: white; border: none; margin-top: 8px;" onclick="unloadModel()"><span data-i18n="unload_model">Unload Model</span> <span class="tooltip-icon" data-i18n-title="tip_unload_model" title="Unload model from VRAM.">(?)</span></button>
+                </div>
+            </div>
+            
+            <div class="performance-section">
+                <h3 data-i18n="sys_perf">System Performance</h3>
+                <div class="stat-row"><span data-i18n="cpu">CPU:</span> <span id="stat-cpu">--%</span></div>
+                <div class="stat-row"><span data-i18n="ram">RAM:</span> <span id="stat-ram">-- MB</span></div>
+                <div class="stat-row"><span data-i18n="gpu">GPU:</span> <span id="stat-gpu">--%</span></div>
+                <div class="stat-row"><span data-i18n="vram">VRAM:</span> <span id="stat-vram">-- MB</span></div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            
+            <!-- Global Active Book Banner -->
+            <div style="display: flex; justify-content: space-between; align-items: center; background: var(--bg-dark); padding: 12px 24px; border-bottom: 1px solid var(--border);">
+                <div>
+                    <span style="color: var(--text-secondary); margin-right: 8px;" data-i18n="active_book">Active Book:</span>
+                    <strong id="global-active-book" data-i18n="no_book">None (Please load or upload a book)</strong>
+                </div>
+                <div style="display: flex; gap: 8px; align-items: center;">
+                    <!-- Language Switcher -->
+                    <select id="lang-selector" onchange="changeLanguage(this.value)" style="margin-right: 16px; padding: 6px; background: #334155; color: white; border: 1px solid var(--border); border-radius: 4px;">
+                        <option value="en">English</option>
+                        <option value="tr">Türkçe</option>
+                    </select>
+                    
+                    <button class="btn btn-primary" onclick="document.getElementById('file-input').click()"><span data-i18n="upload_new">Upload New Book</span> <span class="tooltip-icon" data-i18n-title="tip_upload_new" title="Upload a PDF, EPUB, DOCX, or TXT file.">(?)</span></button>
+                    <button class="btn" style="background: var(--bg-hover); color: white;" onclick="openLoadProjectModal()"><span data-i18n="load_lib">Load from Library</span> <span class="tooltip-icon" data-i18n-title="tip_load_lib" title="Load a previously extracted book.">(?)</span></button>
+                </div>
+            </div>
+
+            <!-- Tabs -->
+            <div class="tabs-container">
+                <ul class="tabs">
+                    <li class="tab active" data-tab="tab-book-extractor" data-i18n="tab_info">Book Information Extractor</li>
+                    <li class="tab" data-tab="tab-full-ocr" data-i18n="tab_ocr">Full Book OCR</li>
+                </ul>
+            </div>
+
+            <!-- Tab Content: Book Extractor -->
+            <div class="tab-content active" id="tab-book-extractor" style="padding: 24px;">
+                <header style="margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <h1 data-i18n="tab_info">Book Information Extractor</h1>
+                        <p data-i18n="ext_desc">Extract metadata from the active book.</p>
+                    </div>
+                    <button class="btn btn-primary" onclick="askLLM()" id="btn-ask-llm" style="background: #10b981; display: none;"><span data-i18n="ask_llm">Ask LLM for Information ✨</span> <span class="tooltip-icon" data-i18n-title="tip_ask_llm" title="Send the first X words to the LLM to extract title, author, and genre automatically.">(?)</span></button>
+                </header>
+
+                <div class="extractor-config" style="background: var(--bg-dark); padding: 16px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 24px;">
+                    <div style="display: flex; gap: 16px;">
+                        <div class="input-group" style="flex: 1;">
+                            <details>
+                                <summary style="cursor: pointer; font-weight: 600; color: var(--text-primary); user-select: none;"><span data-i18n="sys_prompt">System Prompt (Instructions to LLM) ⚙️</span> <span class="tooltip-icon" data-i18n-title="tip_sys_prompt" title="Instructions given to the AI for extracting metadata.">(?)</span></summary>
+                                <textarea id="extractor-system-prompt" rows="6" style="width: 100%; resize: vertical; margin-top: 8px;"></textarea>
+                            </details>
+                        </div>
+                        <div class="input-group" style="width: 200px;">
+                            <label><span data-i18n="words_extract">Words to Extract</span> <span class="tooltip-icon" data-i18n-title="tip_words_extract" title="Number of words from the beginning of the book to analyze.">(?)</span></label>
+                            <input type="number" id="words-extract" value="1000">
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" style="margin-top: 12px;" onclick="saveConfig()"><span data-i18n="save_settings">Save Settings</span></button>
+                </div>
+
+                <div class="upload-area" id="drop-zone">
+                    <input type="file" id="file-input" hidden accept=".pdf,.epub,.docx,.txt">
+                    <div class="upload-icon">📄</div>
+                    <h3 data-i18n="drag_drop">Drag & Drop your file here</h3>
+                    <p data-i18n="or_click">or click to browse</p>
+                </div>
+
+                <div class="status-container" id="status-container" style="display: none;">
+                    <div class="loader"></div>
+                    <p id="status-text" data-i18n="processing">Processing...</p>
+                </div>
+
+                <div class="results-container" id="results-container" style="display: none;">
+                    <div class="metrics-bar">
+                        <div class="metric"><span class="label" data-i18n="time_taken">Time Taken</span><span class="val" id="res-time">-- s</span></div>
+                        <div class="metric"><span class="label" data-i18n="tps">Tokens/sec</span><span class="val" id="res-tps">--</span></div>
+                        <div class="metric"><span class="label" data-i18n="tokens_sent">Tokens Sent</span><span class="val" id="res-sent">--</span></div>
+                        <div class="metric"><span class="label" data-i18n="tokens_recv">Tokens Received</span><span class="val" id="res-recv">--</span></div>
+                    </div>
+
+                    <div class="card">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                            <h3 data-i18n="metadata_ext">Metadata Extracted</h3>
+                            <button class="btn btn-primary" onclick="saveBookDetails()"><span data-i18n="save_details">Save Book Details</span> <span class="tooltip-icon" data-i18n-title="tip_save_details" title="Save the fields below to the database.">(?)</span></button>
+                        </div>
+                        
+                        <form id="metadata-form" class="metadata-grid">
+                            <input type="hidden" id="current-project-id">
+                            <div class="input-group"><label data-i18n="lbl_title">Title</label><input type="text" id="meta-title"></div>
+                            <div class="input-group"><label data-i18n="lbl_author">Author</label><input type="text" id="meta-author"></div>
+                            <div class="input-group"><label data-i18n="lbl_words">Total Words (Raw File)</label><input type="text" id="meta-word-count" readonly style="background: var(--bg-hover);"></div>
+                            <div class="input-group"><label data-i18n="lbl_date">Publish Date</label><input type="text" id="meta-publish-date"></div>
+                            <div class="input-group"><label data-i18n="lbl_genre">Genre</label><input type="text" id="meta-genre"></div>
+                            <div class="input-group"><label data-i18n="lbl_style">Style</label><input type="text" id="meta-style"></div>
+                            <div class="input-group"><label data-i18n="lbl_audience">Target Audience</label><input type="text" id="meta-target-audience"></div>
+                            <div class="input-group"><label data-i18n="lbl_orig_lang">Original Language</label><input type="text" id="meta-original-language"></div>
+                            <div class="input-group"><label data-i18n="lbl_prov_lang">Provided Language</label><input type="text" id="meta-provided-language"></div>
+                            <div class="input-group" style="display: flex; align-items: center; gap: 8px; flex-direction: row;"><input type="checkbox" id="meta-is-translation"><label data-i18n="lbl_is_trans">Is Translation</label></div>
+                            <div class="input-group"><label data-i18n="lbl_translator">Translator</label><input type="text" id="meta-translator"></div>
+                            <div class="input-group" style="grid-column: 1 / -1;"><label data-i18n="lbl_details">Details</label><textarea id="meta-details" rows="3" style="width: 100%;"></textarea></div>
+                        </form>
+                    </div>
+
+                    <div class="card">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                            <h3 data-i18n="txt_process">Text Processing</h3>
+                            <div>
+                                <button class="btn" style="background: var(--bg-dark); color: var(--text-primary); margin-right: 8px;" onclick="toggleTextLayout()"><span data-i18n="toggle_sbs">Toggle Side-by-Side</span> <span class="tooltip-icon" data-i18n-title="tip_toggle_sbs" title="Change the layout of the text boxes below.">(?)</span></button>
+                            </div>
+                        </div>
+                        
+                        <div id="text-comparison-container" class="text-comparison-flex">
+                            <div class="text-box-wrapper">
+                                <h4 data-i18n="sent_llm">Sent to LLM (Raw Extract)</h4>
+                                <textarea id="res-text-sent" readonly class="text-preview"></textarea>
+                            </div>
+                            <div class="text-box-wrapper">
+                                <h4 data-i18n="recv_llm">Received from LLM (Corrected)</h4>
+                                <textarea id="res-text-recv" readonly class="text-preview"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Tab Content: Full Book OCR -->
+            <div class="tab-content" id="tab-full-ocr" style="padding: 24px;">
+                <header style="margin-bottom: 24px;">
+                    <h1 data-i18n="tab_ocr">Full Book OCR Corrector</h1>
+                    <p data-i18n="ocr_desc">Runs asynchronously over the entire book to perfectly correct scanning errors and typos.</p>
+                </header>
+
+                <div class="extractor-config" style="background: var(--bg-dark); padding: 16px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 24px;">
+                    <div class="input-group">
+                        <details>
+                            <summary style="cursor: pointer; font-weight: 600; color: var(--text-primary); user-select: none;"><span data-i18n="sys_prompt">System Prompt (Instructions to LLM) ⚙️</span> <span class="tooltip-icon" data-i18n-title="tip_ocr_prompt" title="Instructions given to the AI for fixing OCR errors.">(?)</span></summary>
+                            <textarea id="ocr-system-prompt" rows="8" style="width: 100%; resize: vertical; margin-top: 8px;">You are an expert editor and OCR correction AI. 
+Fix any OCR scanning errors, typos, and formatting artifacts in the text. 
+Pay special attention to words that may have been accidentally split by spaces or line breaks.
+Do not rewrite or alter the author's words.
+
+Return strictly in JSON format:
+{
+    "corrected_text": "..."
+}</textarea>
+                        </details>
+                    </div>
+                    <div style="display: flex; gap: 8px; margin-top: 16px;">
+                        <div class="input-group" style="flex: 1;">
+                            <label><span data-i18n="ocr_chunk">OCR Chunk Size (Words)</span> <span class="tooltip-icon" data-i18n-title="tip_chunk" title="Number of words to process at a time.">(?)</span></label>
+                            <input type="number" id="ocr-chunk-size" value="2000" onchange="calculateTotalChunks()">
+                        </div>
+                        <div class="input-group" style="flex: 1;">
+                            <label><span data-i18n="ocr_overlap">OCR Overlap (Words)</span> <span class="tooltip-icon" data-i18n-title="tip_overlap" title="Overlap between chunks to maintain context.">(?)</span></label>
+                            <input type="number" id="ocr-overlap-size" value="50" onchange="calculateTotalChunks()">
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" style="margin-top: 12px;" onclick="saveConfig()"><span data-i18n="save_settings">Save Settings</span></button>
+                </div>
+
+                <div class="card" style="margin-bottom: 24px;">
+                    <div style="display: flex; gap: 16px; align-items: center; margin-bottom: 16px;">
+                        <button class="btn btn-primary" onclick="startFullOCR()"><span data-i18n="start_ocr">Start Full Book OCR</span> <span class="tooltip-icon" data-i18n-title="tip_start_ocr" title="Begin the automated correction process for the entire book.">(?)</span></button>
+                        <button class="btn btn-danger" style="background: #ef4444; color: white;" onclick="stopFullOCR()"><span data-i18n="stop_job">Stop Job</span> <span class="tooltip-icon" data-i18n-title="tip_stop_job" title="Abort the current OCR job.">(?)</span></button>
+                        <span id="ocr-job-status" style="font-weight: 600; color: var(--text-secondary);" data-i18n="ready">Ready</span>
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 8px; font-size: 14px; color: var(--text-secondary);">
+                        <div><strong data-i18n="tot_words">Total Words:</strong> <span id="ocr-stat-words">--</span></div>
+                        <div><strong data-i18n="tot_chunks">Total Chunks:</strong> <span id="ocr-stat-chunks-total">--</span></div>
+                        <div><strong data-i18n="chunks_done">Chunks Done:</strong> <span id="ocr-stat-chunks-done">--</span></div>
+                        <div><strong data-i18n="eta">ETA:</strong> <span id="ocr-stat-eta">--</span></div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 16px; font-size: 14px; color: var(--text-secondary);">
+                        <div><strong data-i18n="chunk_tok">Chunk Tokens:</strong> <span id="ocr-stat-curr-tokens">--</span></div>
+                        <div><strong data-i18n="chunk_spd">Chunk Speed:</strong> <span id="ocr-stat-curr-speed">--</span></div>
+                        <div><strong data-i18n="chunk_time">Chunk Time:</strong> <span id="ocr-stat-curr-time">--</span></div>
+                    </div>
+                    
+                    <div style="background: var(--bg-dark); height: 8px; border-radius: 4px; overflow: hidden; margin-bottom: 8px;">
+                        <div id="ocr-progress-bar" style="width: 0%; height: 100%; background: #10b981; transition: width 0.3s;"></div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3 data-i18n="corr_log">Corrections Log</h3>
+                    <ul id="ocr-corrections-list" style="margin-top: 12px; padding-left: 20px; color: var(--text-secondary); max-height: 400px; overflow-y: auto;">
+                        <li data-i18n="no_corr">No corrections made yet.</li>
+                    </ul>
+                </div>
+            </div>
+            
+        </main>
+    </div>
+
+    <!-- Modals & Toasts -->
+    <div id="toast-container" class="toast-container"></div>
+    
+    <div id="load-project-modal" class="modal-overlay" style="display: none;">
+        <div class="modal">
+            <header>
+                <h2 data-i18n="load_prev">Load Previous Extractions</h2>
+                <button class="close-btn" onclick="closeLoadProjectModal()">&times;</button>
+            </header>
+            <div class="modal-content">
+                <div style="display: flex; gap: 8px; width: 100%;">
+                    <select id="project-dropdown" style="flex: 1; padding: 10px; background: var(--bg-dark); color: white; border: 1px solid var(--border); border-radius: 6px;">
+                        <option value="">Loading...</option>
+                    </select>
+                    <button class="btn btn-primary" onclick="loadSelectedProject()"><span data-i18n="btn_load">Load</span></button>
+                    <button class="btn btn-danger" style="background: #ef4444; color: white;" onclick="deleteSelectedProject()"><span data-i18n="btn_delete">Delete</span></button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/script.js"></script>
+
+</body>
+</html>
