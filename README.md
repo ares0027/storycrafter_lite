@@ -4,6 +4,9 @@ Storycrafter Lite, kitaplardan meta veri çıkarmak ve Yerel veya Bulut LLM'leri
 
 Bu depo, ana Storycrafter motorunu küçülterek sadece iki temel özelliği temiz, çift dilli (İngilizce/Türkçe) bir arayüzde sunar.
 
+> **Desteklenen LLM Sağlayıcıları:** Bu uygulama **Ollama**, **LM Studio** ve **Google Gemini**'yi yerel olarak destekler.  
+> **⚠️ Uyarı:** En iyi sonuçları elde etmek için, işlediğiniz kitabın dilini ve bağlamını derinlemesine anlayan, yetenekli bir LLM kullanmanız şarttır. Yetersiz modeller metni düzeltmek yerine bozabilir.
+
 ## Özellikler
 
 ### 1. Kitap Bilgi Çıkarıcı
@@ -60,6 +63,9 @@ Uygulama, LLM'lerin kesin bir JSON verisi döndürmesini bekler. İşte her bir 
 Storycrafter Lite is a powerful, standalone tool designed to extract metadata from books and perfectly correct Full Book OCR (Optical Character Recognition) scans using Local or Cloud LLMs. 
 
 This repository strips down the main Storycrafter engine to provide just the two core features in a clean, dual-language (English/Turkish) interface.
+
+> **Supported LLM Providers:** This application natively supports **Ollama**, **LM Studio**, and **Google Gemini**.  
+> **⚠️ Disclaimer:** For the best results, you must use a highly capable LLM that deeply understands the language of the book you are processing. Lower-tier models may degrade the text rather than correct it.
 
 ## Features
 
