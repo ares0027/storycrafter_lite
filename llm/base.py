@@ -36,15 +36,13 @@ class LLMProvider(ABC):
         """Sends a custom prompt and expects a JSON response."""
         pass
         
-    @abstractmethod
     def process_vision_json(self, system_prompt: str, user_prompt: str, base64_image: str) -> Dict[str, Any]:
         """Sends an image to a Vision model and expects a JSON response."""
-        pass
+        return {}
 
-    @abstractmethod
     async def stream_raw_text(self, system_prompt: str, user_prompt: str):
         """Asynchronously streams raw text from the LLM."""
-        pass
+        yield ""
 
     def process_custom_json_stream(self, system_prompt: str, user_prompt: str, chunk_callback) -> Dict[str, Any]:
         """Sends a custom prompt, streams the response calling chunk_callback(accumulated_text, tokens, time), and expects a JSON response."""
