@@ -731,6 +731,7 @@ const translations = {
         config_title: "Configuration",
         llm_provider: "LLM Provider",
         base_url: "Base URL",
+        api_key: "API Key",
         model: "Model",
         save_config: "Save Configuration",
         llm_controls: "LLM Controls",
@@ -822,6 +823,7 @@ const translations = {
         config_title: "Yapılandırma",
         llm_provider: "LLM Sağlayıcısı",
         base_url: "Temel URL",
+        api_key: "API Anahtarı",
         model: "Model",
         save_config: "Yapılandırmayı Kaydet",
         llm_controls: "LLM Kontrolleri",
@@ -930,6 +932,35 @@ function changeLanguage(lang) {
         }
     });
 }
+
+window.changeLanguage = changeLanguage;
+
+async function handleProviderChange() {
+    const provider = document.getElementById('llm-provider').value;
+    const baseUrlInput = document.getElementById('llm-base-url');
+    const baseUrlLabel = document.querySelector('[data-i18n="base_url"]') || document.querySelector('[data-i18n="api_key"]');
+
+    if (provider === 'lmstudio') {
+        baseUrlInput.value = 'http://localhost:1234/v1';
+        if (baseUrlLabel) baseUrlLabel.setAttribute('data-i18n', 'base_url');
+    } else if (provider === 'ollama') {
+        baseUrlInput.value = 'http://localhost:11434/api';
+        if (baseUrlLabel) baseUrlLabel.setAttribute('data-i18n', 'base_url');
+    } else if (provider === 'gemini') {
+        baseUrlInput.value = '';
+        if (baseUrlLabel) baseUrlLabel.setAttribute('data-i18n', 'api_key');
+        baseUrlInput.placeholder = 'Enter Gemini API Key';
+    } else {
+        baseUrlInput.placeholder = '';
+    }
+
+    // Refresh language for the label change
+    const lang = document.getElementById('lang-selector')?.value || 'en';
+    changeLanguage(lang);
+
+    await updateModels();
+}
+window.handleProviderChange = handleProviderChange;
 
 // Set default language on load
 document.addEventListener('DOMContentLoaded', () => {
