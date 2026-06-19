@@ -964,5 +964,5 @@ window.handleProviderChange = handleProviderChange;
 
 // Set default language on load
 document.addEventListener('DOMContentLoaded', () => {
-    changeLanguage('en');
+    changeLanguage('tr');
 });
