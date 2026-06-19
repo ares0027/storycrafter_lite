@@ -944,7 +944,7 @@ async function handleProviderChange() {
         baseUrlInput.value = 'http://localhost:1234/v1';
         if (baseUrlLabel) baseUrlLabel.setAttribute('data-i18n', 'base_url');
     } else if (provider === 'ollama') {
-        baseUrlInput.value = 'http://localhost:11434/api';
+        baseUrlInput.value = 'http://localhost:11434';
         if (baseUrlLabel) baseUrlLabel.setAttribute('data-i18n', 'base_url');
     } else if (provider === 'gemini') {
         baseUrlInput.value = '';
