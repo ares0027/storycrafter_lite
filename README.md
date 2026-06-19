@@ -18,6 +18,9 @@ This repository strips down the main Storycrafter engine to provide just the two
 - It uses smart overlapping to maintain narrative context between chunks.
 - Sit back and watch the LLM perfectly repair the text, chunk by chunk, without altering the author's words.
 
+## Prerequisites
+- **Python 3.10+**: This is the only software you need installed on your machine. The `start.bat` script handles everything else.
+
 ## How to Install & Run (Windows)
 
 It is highly recommended to run this locally. 
@@ -48,6 +51,9 @@ Bu depo, ana Storycrafter motorunu küçülterek sadece iki temel özelliği tem
 - Bu araç, **kitabınızın tamamı** üzerinde asenkron, parça tabanlı bir düzeltme işlemi yürütür.
 - Parçalar arasında anlatım bağlamını korumak için akıllı örtüşme kullanır.
 - Arkanıza yaslanın ve LLM'nin yazarın kelimelerini değiştirmeden metni parça parça mükemmel bir şekilde onarmasını izleyin.
+
+## Gereksinimler
+- **Python 3.10+**: Bilgisayarınızda kurulu olması gereken tek yazılım budur. Geri kalan her şeyi `start.bat` dosyası halleder.
 
 ## Nasıl Kurulur ve Çalıştırılır (Windows)
 
