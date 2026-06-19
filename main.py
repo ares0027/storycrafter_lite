@@ -54,6 +54,7 @@ async def get_configuration():
 
 @app.post("/api/config")
 async def update_configuration(new_config: dict):
+    print(f"[DEBUG main] Received configuration update: {new_config}")
     for key, value in new_config.items():
         if hasattr(config, key):
             config.update_config(key, value)

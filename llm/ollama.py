@@ -7,18 +7,27 @@ from .base import LLMProvider
 class OllamaProvider(LLMProvider):
     def __init__(self):
         # Default Ollama port is 11434
-        self.base_url = config.LLM_BASE_URL.rstrip('/')
+        url = config.LLM_BASE_URL.rstrip('/')
+        if url.endswith('/api'):
+            url = url[:-4]
+        self.base_url = url
         self.model = config.LLM_MODEL_NAME
 
     def get_models(self) -> List[str]:
         try:
-            response = requests.get(f"{self.base_url}/api/tags")
+            url = f"{self.base_url}/api/tags"
+            print(f"[DEBUG Ollama] Fetching models from: {url}")
+            response = requests.get(url)
+            print(f"[DEBUG Ollama] Response status code: {response.status_code}")
             if response.status_code == 200:
                 data = response.json()
-                return [m["name"] for m in data.get("models", [])]
+                models_list = [m["name"] for m in data.get("models", [])]
+                print(f"[DEBUG Ollama] Successfully found {len(models_list)} models: {models_list}")
+                return models_list
+            print(f"[DEBUG Ollama] Failed to fetch. Status: {response.status_code}, Body: {response.text}")
             return [self.model]
         except Exception as e:
-            print(f"Error fetching models from Ollama: {e}")
+            print(f"[DEBUG Ollama] Error fetching models from Ollama: {e}")
             return [self.model]
 
     def check_connection(self) -> bool:
