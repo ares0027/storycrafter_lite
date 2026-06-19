@@ -30,6 +30,29 @@ It is highly recommended to run this locally.
 3. The script will automatically create a Python virtual environment, install the necessary dependencies, and start the local FastAPI server.
 4. Open your browser and navigate to `http://localhost:8000`.
 
+## Expected LLM Output Format
+
+The application expects the LLMs to return strict JSON data. Here is what each tag means:
+
+```json
+{
+    "corrected_text": "The full text with OCR scanning errors and typos fixed.",
+    "metadata": {
+        "title": "Title of the book",
+        "author": "Author(s) of the book",
+        "details": "Any additional descriptive details about the book",
+        "genre": "The main genre (e.g., Sci-Fi, Fantasy, Non-Fiction)",
+        "style": "The writing style (e.g., Formal, Conversational)",
+        "target_audience": "The intended audience (e.g., Young Adult, Academic)",
+        "publish_date": "The original date or year of publication",
+        "original_language": "The language the book was originally written in",
+        "provided_language": "The language of the uploaded text",
+        "is_translation": true, // Boolean indicating if it was translated
+        "translator": "The translator's name, if applicable"
+    }
+}
+```
+
 ---
 
 # Storycrafter Lite v0.2 (Türkçe)
@@ -63,3 +86,26 @@ Bunu yerel olarak çalıştırmanız şiddetle tavsiye edilir.
 2. **`start.bat`** dosyasına çift tıklayın.
 3. Komut dosyası otomatik olarak bir Python sanal ortamı oluşturacak, gerekli bağımlılıkları yükleyecek ve yerel FastAPI sunucusunu başlatacaktır.
 4. Tarayıcınızı açın ve `http://localhost:8000` adresine gidin.
+
+## Beklenen LLM Çıktı Formatı
+
+Uygulama, LLM'lerin kesin bir JSON verisi döndürmesini bekler. İşte her bir etiketin anlamı:
+
+```json
+{
+    "corrected_text": "OCR tarama hataları ve yazım yanlışları düzeltilmiş tam metin.",
+    "metadata": {
+        "title": "Kitabın başlığı",
+        "author": "Kitabın yazar(lar)ı",
+        "details": "Kitap hakkında ek tanımlayıcı detaylar",
+        "genre": "Ana tür (ör. Bilim Kurgu, Fantezi, Kurgu Dışı)",
+        "style": "Yazım stili (ör. Resmi, Karşılıklı Konuşma)",
+        "target_audience": "Hedef kitle (ör. Genç Yetişkin, Akademik)",
+        "publish_date": "Orijinal yayınlanma tarihi veya yılı",
+        "original_language": "Kitabın orijinal yazım dili",
+        "provided_language": "Yüklenen metnin dili",
+        "is_translation": true, // Çeviri olup olmadığını belirten Boolean değeri
+        "translator": "Varsa çevirmenin adı"
+    }
+}
+```
